@@ -1,0 +1,14 @@
+{
+  "name": "Routine — 나의 루틴",
+  "short_name": "Routine",
+  "description": "나만의 루틴을 기록하고 꾸준히 이어가세요.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f4",
+  "theme_color": "#416b52",
+  "lang": "ko-KR",
+  "icons": [
+    {"src": "/icons/routine.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}

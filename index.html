@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f7f4" />
+    <meta name="description" content="나만의 루틴을 기록하고 꾸준히 이어가세요." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/routine.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/routine.svg" />
+    <title>Routine</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script>if(location.hostname==='localhost'||location.hostname==='127.0.0.1'){const events=new EventSource('/__live');events.onmessage=event=>{if(event.data==='update')location.reload();};}</script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Routine 홈"><span class="brand-mark">r</span><span>routine</span></a>
+        <button class="icon-button" id="settings-button" aria-label="설정" title="설정">⋯</button>
+      </header>
+
+      <section id="list-view" class="view" aria-label="루틴 목록">
+        <div id="routine-list" class="routine-list"></div>
+        <div id="empty-state" class="empty-state" hidden><div class="empty-icon">✳</div><h2>첫 루틴을 만들어볼까요?</h2><p>운동, 명상, 독서처럼 이어가고 싶은 일을 기록해 보세요.</p><button class="button button-primary" id="empty-add">루틴 추가하기 <span>＋</span></button></div>
+        <button class="add-button" id="add-button"><span class="add-symbol">＋</span><span>루틴 추가</span></button>
+      </section>
+
+      <section id="calendar-view" class="view" hidden aria-labelledby="calendar-heading">
+        <button class="back-button" id="back-button"><span>←</span> 모든 루틴</button>
+        <div class="calendar-title"><div><p class="eyebrow">MY ROUTINE</p><h1 id="calendar-heading"></h1><p class="subheading" id="calendar-description"></p></div><button class="icon-button edit-calendar" id="edit-current" aria-label="루틴 편집">✎</button></div>
+        <div class="calendar-card">
+          <div class="month-nav"><button class="month-arrow" id="previous-month" aria-label="이전 달">‹</button><h2 id="month-label"></h2><button class="month-arrow" id="next-month" aria-label="다음 달">›</button></div>
+          <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+          <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-bar"></span>주간 목표 달성</div>
+        </div>
+        <div class="calendar-hint"><span class="hint-icon">◎</span><span>날짜를 두 번 탭하면 완료 표시가 바뀝니다.</span></div>
+        <div class="history-summary" id="history-summary"></div>
+      </section>
+    </main>
+
+    <dialog id="routine-dialog" class="app-dialog">
+      <form id="routine-form">
+        <div class="dialog-heading"><div><p class="eyebrow" id="form-eyebrow">NEW ROUTINE</p><h2 id="form-title">루틴 추가</h2></div><button type="button" class="close-button" data-close="routine-dialog" aria-label="닫기">×</button></div>
+        <label class="field-label" for="routine-name">제목</label><input id="routine-name" name="name" maxlength="40" placeholder="예: 헬스" required />
+        <label class="field-label" for="routine-note">내용 <span class="optional">선택</span></label><textarea id="routine-note" name="note" maxlength="240" rows="3" placeholder="무엇을 할지 간단히 적어주세요"></textarea>
+        <div class="form-row"><div><label class="field-label" for="routine-period">단위</label><select id="routine-period" name="period"><option value="day">1일</option><option value="week">1주</option></select></div><div><label class="field-label" for="routine-target">목표 횟수</label><div class="number-field"><input id="routine-target" name="target" type="number" min="1" max="30" value="1" required /><span>회 이상</span></div></div></div>
+        <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="routine-dialog">취소</button><button type="submit" class="button button-primary">저장하기</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog" class="app-dialog compact-dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">PREFERENCES</p><h2>설정</h2></div><button class="close-button" data-close="settings-dialog" aria-label="닫기">×</button></div>
+      <p class="settings-copy">루틴과 완료 기록은 이 기기에만 저장됩니다.</p>
+      <button class="button button-danger-outline full-button" id="reset-button">모든 데이터 삭제</button>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
