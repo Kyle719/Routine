@@ -55,7 +55,15 @@ function openForm(id=null) {
   $('#routine-dialog').showModal();setTimeout(()=>$('#routine-name').focus(),60);
 }
 function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.'); }
-function openCalendar(id) { currentId=id;shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderCalendar();listView.hidden=true;calendarView.hidden=false;window.scrollTo({top:0,behavior:'instant'}); }
+function openCalendar(id, { pushHistory = true } = {}) {
+  currentId=id;
+  shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  if(pushHistory)history.pushState({routineView:'calendar',routineId:id},'',location.href);
+  renderCalendar();
+  listView.hidden=true;
+  calendarView.hidden=false;
+  window.scrollTo({top:0,behavior:'instant'});
+}
 function renderCalendar() {
   const routine=state.routines.find(x=>x.id===currentId);if(!routine){showList();return;}
   $('#calendar-heading').textContent=routine.name;$('#calendar-description').textContent=routine.note||prettyTarget(routine);$('#month-label').textContent=formatDate(shownMonth,{year:'numeric',month:'long'});
@@ -86,9 +94,14 @@ form.addEventListener('submit',event=>{event.preventDefault();const data=new For
   else{const routine={id:uid(),...value};state.routines.push(routine);state.completions[completionKey(routine.id)]=[];persist();$('#routine-dialog').close();renderList();showToast('새 루틴을 추가했습니다.');}
 });
 $('#settings-button').addEventListener('click',()=>$('#settings-dialog').showModal());$('#reset-button').addEventListener('click',()=>{if(!confirm('이 기기에 저장된 모든 루틴과 완료 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.'))return;state={routines:[],completions:{}};persist();$('#settings-dialog').close();showList();showToast('모든 데이터를 삭제했습니다.');});
-$('#back-button').addEventListener('click',showList);$('#edit-current').addEventListener('click',()=>openForm(currentId));
+$('#back-button').addEventListener('click',()=>{if(history.state?.routineView==='calendar')history.back();else showList();});$('#edit-current').addEventListener('click',()=>openForm(currentId));
 $('#previous-month').addEventListener('click',()=>{shownMonth=new Date(shownMonth.getFullYear(),shownMonth.getMonth()-1,1);renderCalendar();});$('#next-month').addEventListener('click',()=>{shownMonth=new Date(shownMonth.getFullYear(),shownMonth.getMonth()+1,1);renderCalendar();});
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>document.getElementById(button.dataset.close).close()));
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();}));
+window.addEventListener('popstate',event=>{
+  if(event.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===event.state.routineId))openCalendar(event.state.routineId,{pushHistory:false});
+  else showList();
+});
 renderList();
+if(history.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===history.state.routineId))openCalendar(history.state.routineId,{pushHistory:false});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration failed',error)));
