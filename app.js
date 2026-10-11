@@ -14,6 +14,7 @@ const lastTaps = new WeakMap();
 let reorderGesture = null;
 let calendarSwipe = null;
 let detailOpenedAt = 0;
+let suppressClickUntil = 0;
 
 function loadState() {
   try {
@@ -158,11 +159,12 @@ function openForm(id=null) {
   $('#routine-dialog').showModal();setTimeout(()=>$('#routine-name').focus(),60);
 }
 function updateEntryFields(){const isRoutine=$('#entry-type').value==='routine';$('#routine-goal-fields').hidden=!isRoutine;$('#routine-note-optional').hidden=!isRoutine;$('#routine-period').required=isRoutine;$('#routine-target').required=isRoutine;$('#routine-note').placeholder=isRoutine?'무엇을 할지 간단히 적어주세요':'내용을 입력해 주세요';}
-function openTextDetail(id,{pushHistory=true}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';if(pushHistory)history.pushState({routineView:'text',routineId:id},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
+function openTextDetail(id,{pushHistory=true}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();suppressClickUntil=detailOpenedAt+650;$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';if(pushHistory)history.pushState({routineView:'text',routineId:id},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
 function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return false;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return false;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.');return true; }
 function openCalendar(id, { pushHistory = true } = {}) {
   currentId=id;
   detailOpenedAt=Date.now();
+  suppressClickUntil=detailOpenedAt+650;
   shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
   if(pushHistory)history.pushState({routineView:'calendar',routineId:id},'',location.href);
   renderCalendar();
@@ -210,6 +212,7 @@ $('#delete-text-entry').addEventListener('click',()=>{if(Date.now()-detailOpened
 function saveTextDetailField(field){const entry=state.routines.find(item=>item.id===currentId&&item.type==='text');if(!entry)return;entry[field]=field==='name'?$('#text-detail-title').value:$('#text-detail-content').value;persist();}
 $('#text-detail-title').addEventListener('input',()=>saveTextDetailField('name'));
 $('#text-detail-content').addEventListener('input',()=>saveTextDetailField('note'));
+document.addEventListener('click',event=>{if(event.isTrusted&&event.detail>0&&Date.now()<suppressClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
 $('#previous-month').addEventListener('click',()=>changeMonth(-1));$('#next-month').addEventListener('click',()=>changeMonth(1));
 $('#month-label').addEventListener('click',()=>{const input=$('#month-input');input.value=`${shownMonth.getFullYear()}${String(shownMonth.getMonth()+1).padStart(2,'0')}`;$('#month-dialog').showModal();setTimeout(()=>{input.focus();input.select();},50);});
 $('#month-form').addEventListener('submit',event=>{event.preventDefault();const value=$('#month-input').value.trim();const year=Number(value.slice(0,4)),month=Number(value.slice(4,6));if(!/^\d{6}$/.test(value)||year<1000||month<1||month>12){showToast('연월을 YYYYMM 형식으로 입력해 주세요.');return;}shownMonth=new Date(year,month-1,1);$('#month-dialog').close();renderCalendar();});
