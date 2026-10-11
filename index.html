@@ -17,13 +17,12 @@
     <main class="app-shell">
       <header class="topbar">
         <a class="brand" id="home-link" href="./" aria-label="Routine 홈"><span class="brand-mark">r</span><span>routine</span></a>
-        <button class="icon-button" id="settings-button" aria-label="설정" title="설정">⋯</button>
+        <div class="topbar-actions"><button class="icon-button add-icon-button" id="add-button" aria-label="루틴 추가" title="루틴 추가">＋</button><button class="icon-button" id="settings-button" aria-label="설정" title="설정">⋯</button></div>
       </header>
 
       <section id="list-view" class="view" aria-label="루틴 목록">
         <div id="routine-list" class="routine-list"></div>
         <div id="empty-state" class="empty-state" hidden><div class="empty-icon">✳</div><h2>첫 루틴을 만들어볼까요?</h2><p>운동, 명상, 독서처럼 이어가고 싶은 일을 기록해 보세요.</p><button class="button button-primary" id="empty-add">루틴 추가하기 <span>＋</span></button></div>
-        <button class="add-button" id="add-button"><span class="add-symbol">＋</span><span>루틴 추가</span></button>
       </section>
 
       <section id="calendar-view" class="view" hidden aria-labelledby="calendar-heading">

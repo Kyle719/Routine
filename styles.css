@@ -42,3 +42,5 @@ body.reordering,body.reordering *{cursor:grabbing!important}
 .text-content-field{flex:1;min-height:260px;margin-top:14px;padding:0;border:0;border-radius:0;resize:none;background:transparent;color:var(--text);font-size:16px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
 .text-content-field:focus{border:0;box-shadow:none}
 @media(max-width:520px){.text-view{min-height:calc(100dvh - 68px)}.text-title-field{font-size:25px}.text-content-field{min-height:240px}}
+.topbar-actions{display:flex;align-items:center;gap:4px}
+.add-icon-button{font-size:27px;font-weight:400}
