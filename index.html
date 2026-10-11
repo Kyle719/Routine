@@ -16,7 +16,7 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <a class="brand" href="/" aria-label="Routine 홈"><span class="brand-mark">r</span><span>routine</span></a>
+        <a class="brand" id="home-link" href="./" aria-label="Routine 홈"><span class="brand-mark">r</span><span>routine</span></a>
         <button class="icon-button" id="settings-button" aria-label="설정" title="설정">⋯</button>
       </header>
 
@@ -27,10 +27,9 @@
       </section>
 
       <section id="calendar-view" class="view" hidden aria-labelledby="calendar-heading">
-        <button class="back-button" id="back-button"><span>←</span> 모든 루틴</button>
-        <div class="calendar-title"><div><p class="eyebrow">MY ROUTINE</p><h1 id="calendar-heading"></h1><p class="subheading" id="calendar-description"></p></div><button class="icon-button edit-calendar" id="edit-current" aria-label="루틴 편집">✎</button></div>
+        <div class="calendar-title"><div><p class="eyebrow">MY ROUTINE</p><h1 id="calendar-heading"></h1><p class="subheading" id="calendar-description"></p></div><div class="calendar-actions"><button class="icon-button edit-calendar" id="edit-current" aria-label="루틴 편집">✎</button><button class="icon-button delete-current" id="delete-current" aria-label="루틴 삭제" title="루틴 삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
         <div class="calendar-card">
-          <div class="month-nav"><button class="month-arrow" id="previous-month" aria-label="이전 달">‹</button><h2 id="month-label"></h2><button class="month-arrow" id="next-month" aria-label="다음 달">›</button></div>
+          <div class="month-nav"><button class="month-arrow" id="previous-month" aria-label="이전 달">‹</button><button class="month-label" id="month-label" type="button" aria-label="연월 직접 이동"></button><button class="month-arrow" id="next-month" aria-label="다음 달">›</button></div>
           <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
           <div id="calendar-grid" class="calendar-grid"></div>
           <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-bar"></span>주간 목표 달성</div>
@@ -43,10 +42,27 @@
     <dialog id="routine-dialog" class="app-dialog">
       <form id="routine-form">
         <div class="dialog-heading"><div><p class="eyebrow" id="form-eyebrow">NEW ROUTINE</p><h2 id="form-title">루틴 추가</h2></div><button type="button" class="close-button" data-close="routine-dialog" aria-label="닫기">×</button></div>
+        <label class="field-label" for="entry-type">항목 유형</label><select id="entry-type" name="type"><option value="routine">루틴</option><option value="text">텍스트</option></select>
         <label class="field-label" for="routine-name">제목</label><input id="routine-name" name="name" maxlength="40" placeholder="예: 헬스" required />
-        <label class="field-label" for="routine-note">내용 <span class="optional">선택</span></label><textarea id="routine-note" name="note" maxlength="240" rows="3" placeholder="무엇을 할지 간단히 적어주세요"></textarea>
-        <div class="form-row"><div><label class="field-label" for="routine-period">단위</label><select id="routine-period" name="period"><option value="day">1일</option><option value="week">1주</option></select></div><div><label class="field-label" for="routine-target">목표 횟수</label><div class="number-field"><input id="routine-target" name="target" type="number" min="1" max="30" value="1" required /><span>회 이상</span></div></div></div>
+        <label class="field-label" for="routine-note">내용 <span class="optional" id="routine-note-optional">선택</span></label><textarea id="routine-note" name="note" maxlength="240" rows="3" placeholder="무엇을 할지 간단히 적어주세요"></textarea>
+        <div id="routine-goal-fields" class="form-row"><div><label class="field-label" for="routine-period">단위</label><select id="routine-period" name="period"><option value="day">1일</option><option value="week">1주</option></select></div><div><label class="field-label" for="routine-target">목표 횟수</label><div class="number-field"><input id="routine-target" name="target" type="number" min="1" max="30" value="1" required /><span>회 이상</span></div></div></div>
         <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="routine-dialog">취소</button><button type="submit" class="button button-primary">저장하기</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="text-detail-dialog" class="app-dialog compact-dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">TEXT NOTE</p><h2 id="text-detail-title"></h2></div><button type="button" class="close-button" data-close="text-detail-dialog" aria-label="닫기">×</button></div>
+      <p id="text-detail-content" class="text-detail-content"></p>
+      <div class="dialog-actions"><button type="button" class="button button-danger-outline" id="delete-text-entry">삭제</button><button type="button" class="button button-primary" id="edit-text-entry">편집</button></div>
+    </dialog>
+
+    <dialog id="month-dialog" class="app-dialog compact-dialog">
+      <form id="month-form">
+        <div class="dialog-heading"><div><p class="eyebrow">GO TO DATE</p><h2>연월 이동</h2></div><button type="button" class="close-button" data-close="month-dialog" aria-label="닫기">×</button></div>
+        <label class="field-label" for="month-input">이동할 연월</label>
+        <input id="month-input" name="month" type="text" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" placeholder="YYYYMM" aria-describedby="month-format-hint" required />
+        <p id="month-format-hint" class="month-format-hint">예: 202610</p>
+        <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="month-dialog">취소</button><button type="submit" class="button button-primary">이동</button></div>
       </form>
     </dialog>
 

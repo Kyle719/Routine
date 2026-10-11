@@ -6,3 +6,21 @@
 .calendar-day.week-end.week-complete::before{border-radius:0 15px 15px 0}
 .legend-bar{width:22px;height:11px;background:var(--week-highlight);border:1px solid #3e885866}
 @media(prefers-color-scheme:dark){:root{--week-highlight:#3d6047}.calendar-day.week-complete::before{box-shadow:inset 0 1px 0 #a7d7af80,inset 0 -1px 0 #a7d7af80}.legend-bar{border-color:#a7d7af80}}
+.calendar-card{touch-action:pan-y}
+.month-label{min-width:0;min-height:44px;padding:0 10px;border:0;border-radius:12px;background:transparent;color:var(--text);font:inherit;font-size:16px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.month-label:hover,.month-label:focus-visible{background:var(--surface-2);outline:none}
+.month-label::after{content:'⌄';margin-left:7px;color:var(--muted);font-size:13px}
+.calendar-actions{display:flex;gap:5px;flex:none}
+.delete-current{color:var(--red);font-size:0}
+.delete-current svg{width:21px;height:21px}
+.delete-current:hover{background:#fbefed}
+.routine-card{-webkit-touch-callout:none;-webkit-user-select:none}
+.routine-card.dragging{z-index:4;opacity:.72;transform:scale(1.025);border-color:var(--accent);box-shadow:0 15px 40px #0003}
+.routine-card.drop-target{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+body.reordering,body.reordering *{cursor:grabbing!important}
+.month-format-hint{margin:8px 2px 0;color:var(--muted);font-size:12px}
+@media(prefers-color-scheme:dark){.delete-current:hover{background:#392824}}
+.routine-note{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal}
+.text-type-pill{flex:none;padding:7px 10px;border-radius:10px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:600}
+.text-card .routine-note{margin-bottom:14px}
+.text-detail-content{min-height:54px;margin:0;color:var(--muted);font-size:15px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
