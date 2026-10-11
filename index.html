@@ -37,6 +37,11 @@
         <div class="calendar-hint"><span class="hint-icon">◎</span><span>날짜를 두 번 탭하면 완료 표시가 바뀝니다.</span></div>
         <div class="history-summary" id="history-summary"></div>
       </section>
+
+      <section id="text-view" class="view text-view" hidden aria-labelledby="text-detail-title">
+        <div class="text-note-heading"><div><p class="eyebrow">TEXT NOTE</p><input id="text-detail-title" class="text-title-field" type="text" maxlength="40" aria-label="제목" placeholder="제목" /></div><button class="icon-button delete-current" id="delete-text-entry" aria-label="텍스트 항목 삭제" title="삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        <textarea id="text-detail-content" class="text-content-field" aria-label="내용" placeholder="메모 작성"></textarea>
+      </section>
     </main>
 
     <dialog id="routine-dialog" class="app-dialog">
@@ -48,12 +53,6 @@
         <div id="routine-goal-fields" class="form-row"><div><label class="field-label" for="routine-period">단위</label><select id="routine-period" name="period"><option value="day">1일</option><option value="week">1주</option></select></div><div><label class="field-label" for="routine-target">목표 횟수</label><div class="number-field"><input id="routine-target" name="target" type="number" min="1" max="30" value="1" required /><span>회 이상</span></div></div></div>
         <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="routine-dialog">취소</button><button type="submit" class="button button-primary">저장하기</button></div>
       </form>
-    </dialog>
-
-    <dialog id="text-detail-dialog" class="app-dialog compact-dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">TEXT NOTE</p><h2 id="text-detail-title"></h2></div><button type="button" class="close-button" data-close="text-detail-dialog" aria-label="닫기">×</button></div>
-      <p id="text-detail-content" class="text-detail-content"></p>
-      <div class="dialog-actions"><button type="button" class="button button-danger-outline" id="delete-text-entry">삭제</button><button type="button" class="button button-primary" id="edit-text-entry">편집</button></div>
     </dialog>
 
     <dialog id="month-dialog" class="app-dialog compact-dialog">

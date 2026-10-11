@@ -2,6 +2,7 @@ const STORAGE_KEY = 'routine-app-data-v1';
 const $ = (selector) => document.querySelector(selector);
 const listView = $('#list-view');
 const calendarView = $('#calendar-view');
+const textView = $('#text-view');
 const routineList = $('#routine-list');
 const emptyState = $('#empty-state');
 const form = $('#routine-form');
@@ -12,6 +13,7 @@ let toastTimer;
 const lastTaps = new WeakMap();
 let reorderGesture = null;
 let calendarSwipe = null;
+let detailOpenedAt = 0;
 
 function loadState() {
   try {
@@ -49,7 +51,7 @@ function renderList() {
     card.addEventListener('touchmove',moveTouchReorder,{passive:false});
     card.addEventListener('touchend',event=>finishTouchReorder(event,card,routine.id));
     card.addEventListener('touchcancel',event=>cancelTouchReorder(event));
-    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCalendar(routine.id);}});
+    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(isText)openTextDetail(routine.id);else openCalendar(routine.id);}});
     routineList.append(card);
   }
 }
@@ -156,15 +158,15 @@ function openForm(id=null) {
   $('#routine-dialog').showModal();setTimeout(()=>$('#routine-name').focus(),60);
 }
 function updateEntryFields(){const isRoutine=$('#entry-type').value==='routine';$('#routine-goal-fields').hidden=!isRoutine;$('#routine-note-optional').hidden=!isRoutine;$('#routine-period').required=isRoutine;$('#routine-target').required=isRoutine;$('#routine-note').placeholder=isRoutine?'무엇을 할지 간단히 적어주세요':'내용을 입력해 주세요';}
-function openTextDetail(id){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;$('#text-detail-title').textContent=entry.name;$('#text-detail-content').textContent=entry.note||'내용이 없습니다.';$('#text-detail-dialog').showModal();}
+function openTextDetail(id,{pushHistory=true}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';if(pushHistory)history.pushState({routineView:'text',routineId:id},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
 function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return false;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return false;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.');return true; }
 function openCalendar(id, { pushHistory = true } = {}) {
   currentId=id;
+  detailOpenedAt=Date.now();
   shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
   if(pushHistory)history.pushState({routineView:'calendar',routineId:id},'',location.href);
   renderCalendar();
-  listView.hidden=true;
-  calendarView.hidden=false;
+  transitionView(listView,calendarView,'forward');
   window.scrollTo({top:0,behavior:'instant'});
 }
 function renderCalendar() {
@@ -189,22 +191,25 @@ function renderCalendar() {
   $('#previous-month').disabled=false;$('#next-month').disabled=false;
 }
 function toggleDate(id,iso) { const key=completionKey(id),set=new Set(state.completions[key]||[]);if(set.has(iso)){set.delete(iso);showToast('완료 표시를 해제했습니다.');}else{set.add(iso);showToast('완료로 기록했습니다.');}state.completions[key]=[...set].sort();persist();renderCalendar(); }
-function showList(){calendarView.hidden=true;listView.hidden=false;renderList();window.scrollTo({top:0,behavior:'instant'});}
+function transitionView(from,to,direction){from.hidden=true;to.hidden=false;to.classList.remove('view-enter-forward','view-enter-back');void to.offsetWidth;to.classList.add(direction==='forward'?'view-enter-forward':'view-enter-back');to.addEventListener('animationend',()=>to.classList.remove('view-enter-forward','view-enter-back'),{once:true});}
+function showList(){renderList();const from=!calendarView.hidden?calendarView:!textView.hidden?textView:null;if(from)transitionView(from,listView,'back');else{calendarView.hidden=true;textView.hidden=true;listView.hidden=false;}window.scrollTo({top:0,behavior:'instant'});}
 function changeMonth(amount){shownMonth=new Date(shownMonth.getFullYear(),shownMonth.getMonth()+amount,1);renderCalendar();}
 function finishCalendarSwipe(event,cancelled=false){if(!calendarSwipe||event&&event.pointerId!==calendarSwipe.pointerId)return;const gesture=calendarSwipe;calendarSwipe=null;if(!cancelled&&gesture.swiped&&Math.abs(gesture.startX-gesture.endX)>56)changeMonth(gesture.endX<gesture.startX?1:-1);}
 function showToast(message){const toast=$('#toast');toast.textContent=message;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),1800);}
 $('#add-button').addEventListener('click',()=>openForm());$('#empty-add').addEventListener('click',()=>openForm());
 form.addEventListener('submit',event=>{event.preventDefault();const data=new FormData(form);const type=String(data.get('type'));const target=Number(data.get('target'));if(type==='routine'&&(!Number.isInteger(target)||target<1||target>30)){$('#routine-target').focus();return;}const value={type,name:String(data.get('name')).trim(),note:String(data.get('note')).trim()};if(type==='routine'){value.period=String(data.get('period'));value.target=target;}if(!value.name)return;
-  if(currentId){const old=state.routines.find(x=>x.id===currentId);if(!old)return;Object.assign(old,value);persist();$('#routine-dialog').close();if(type==='text'){renderList();$('#text-detail-dialog').close();showToast('텍스트 항목을 수정했습니다.');}else if(old.type==='text'){renderList();$('#text-detail-dialog').close();showToast('루틴을 수정했습니다.');}else{renderCalendar();showToast('루틴을 수정했습니다.');}}
+  if(currentId){const old=state.routines.find(x=>x.id===currentId);if(!old)return;const oldType=old.type||'routine';Object.assign(old,value);persist();$('#routine-dialog').close();if(oldType==='text'&&type==='text'){renderList();$('#text-detail-title').value=old.name;$('#text-detail-content').value=old.note||'';showToast('텍스트 항목을 수정했습니다.');}else if(oldType!==type){renderList();history.replaceState(null,'',location.href);showList();showToast(type==='text'?'텍스트 항목으로 변경했습니다.':'루틴으로 변경했습니다.');}else{renderCalendar();showToast('루틴을 수정했습니다.');}}
   else{const routine={id:uid(),...value};state.routines.push(routine);if(type==='routine')state.completions[completionKey(routine.id)]=[];persist();$('#routine-dialog').close();renderList();showToast(type==='text'?'텍스트 항목을 추가했습니다.':'새 루틴을 추가했습니다.');}
 });
 $('#entry-type').addEventListener('change',updateEntryFields);
 $('#settings-button').addEventListener('click',()=>$('#settings-dialog').showModal());$('#reset-button').addEventListener('click',()=>{if(!confirm('이 기기에 저장된 모든 루틴과 완료 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.'))return;state={routines:[],completions:{}};persist();$('#settings-dialog').close();showList();showToast('모든 데이터를 삭제했습니다.');});
 $('#home-link').addEventListener('click',event=>{event.preventDefault();history.replaceState(null,'',location.href);showList();});
-$('#edit-current').addEventListener('click',()=>openForm(currentId));
-$('#delete-current').addEventListener('click',()=>{if(deleteRoutine(currentId)){history.replaceState(null,'',location.href);showList();}});
-$('#edit-text-entry').addEventListener('click',()=>openForm(currentId));
-$('#delete-text-entry').addEventListener('click',()=>{if(deleteRoutine(currentId))$('#text-detail-dialog').close();});
+$('#edit-current').addEventListener('click',()=>{if(Date.now()-detailOpenedAt>=700)openForm(currentId);});
+$('#delete-current').addEventListener('click',()=>{if(Date.now()-detailOpenedAt<700)return;if(deleteRoutine(currentId)){history.replaceState(null,'',location.href);showList();}});
+$('#delete-text-entry').addEventListener('click',()=>{if(Date.now()-detailOpenedAt<700)return;if(deleteRoutine(currentId)){history.replaceState(null,'',location.href);showList();}});
+function saveTextDetailField(field){const entry=state.routines.find(item=>item.id===currentId&&item.type==='text');if(!entry)return;entry[field]=field==='name'?$('#text-detail-title').value:$('#text-detail-content').value;persist();}
+$('#text-detail-title').addEventListener('input',()=>saveTextDetailField('name'));
+$('#text-detail-content').addEventListener('input',()=>saveTextDetailField('note'));
 $('#previous-month').addEventListener('click',()=>changeMonth(-1));$('#next-month').addEventListener('click',()=>changeMonth(1));
 $('#month-label').addEventListener('click',()=>{const input=$('#month-input');input.value=`${shownMonth.getFullYear()}${String(shownMonth.getMonth()+1).padStart(2,'0')}`;$('#month-dialog').showModal();setTimeout(()=>{input.focus();input.select();},50);});
 $('#month-form').addEventListener('submit',event=>{event.preventDefault();const value=$('#month-input').value.trim();const year=Number(value.slice(0,4)),month=Number(value.slice(4,6));if(!/^\d{6}$/.test(value)||year<1000||month<1||month>12){showToast('연월을 YYYYMM 형식으로 입력해 주세요.');return;}shownMonth=new Date(year,month-1,1);$('#month-dialog').close();renderCalendar();});
@@ -216,8 +221,10 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();}));
 window.addEventListener('popstate',event=>{
   if(event.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===event.state.routineId))openCalendar(event.state.routineId,{pushHistory:false});
+  else if(event.state?.routineView==='text'&&state.routines.some(routine=>routine.id===event.state.routineId&&routine.type==='text'))openTextDetail(event.state.routineId,{pushHistory:false});
   else showList();
 });
 renderList();
 if(history.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===history.state.routineId))openCalendar(history.state.routineId,{pushHistory:false});
+else if(history.state?.routineView==='text'&&state.routines.some(routine=>routine.id===history.state.routineId&&routine.type==='text'))openTextDetail(history.state.routineId,{pushHistory:false});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration failed',error)));

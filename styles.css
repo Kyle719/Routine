@@ -24,3 +24,21 @@ body.reordering,body.reordering *{cursor:grabbing!important}
 .text-type-pill{flex:none;padding:7px 10px;border-radius:10px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:600}
 .text-card .routine-note{margin-bottom:14px}
 .text-detail-content{min-height:54px;margin:0;color:var(--muted);font-size:15px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.routine-card{min-height:0;padding-top:16px;padding-bottom:13px}
+.routine-note{margin-top:6px;margin-bottom:0;min-height:0}
+.routine-note.empty-note{display:none}
+.routine-card.text-card{min-height:0}
+.view-enter-forward{animation:view-enter-forward .28s cubic-bezier(.2,.75,.25,1) both}
+.view-enter-back{animation:view-enter-back .28s cubic-bezier(.2,.75,.25,1) both}
+@keyframes view-enter-forward{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes view-enter-back{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){.view-enter-forward,.view-enter-back{animation-duration:.01ms}}
+.text-view{min-height:calc(100dvh - 76px);display:flex;flex-direction:column}
+.text-view[hidden]{display:none}
+.text-note-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.text-note-heading .eyebrow{margin-bottom:7px}
+.text-title-field{display:block;min-height:48px;padding:0;border:0;border-radius:0;background:transparent;color:var(--text);font-size:28px;font-weight:700;letter-spacing:-.8px}
+.text-title-field:focus{border:0;box-shadow:none}
+.text-content-field{flex:1;min-height:260px;margin-top:14px;padding:0;border:0;border-radius:0;resize:none;background:transparent;color:var(--text);font-size:16px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.text-content-field:focus{border:0;box-shadow:none}
+@media(max-width:520px){.text-view{min-height:calc(100dvh - 68px)}.text-title-field{font-size:25px}.text-content-field{min-height:240px}}
