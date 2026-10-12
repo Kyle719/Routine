@@ -44,10 +44,10 @@ function renderList() {
   routineList.hidden = state.routines.length === 0;
   for (const routine of state.routines) {
     const isText=routine.type==='text';
-    const card=document.createElement('article'); card.className=`routine-card ${isText?'text-card':''}`; card.dataset.routineId=routine.id; card.tabIndex=0; card.setAttribute('role','button'); card.setAttribute('aria-label',`${routine.name}${isText?', 텍스트 항목':`, ${prettyTarget(routine)}`}. 두 번 탭하여 ${isText?'내용 보기':'기록 보기'}, 길게 눌러 순서 이동`);
+    const card=document.createElement('article'); card.className=`routine-card ${isText?'text-card':''}`; card.dataset.routineId=routine.id; card.tabIndex=0; card.setAttribute('role','button'); card.setAttribute('aria-label',`${routine.name}${isText?', 텍스트 항목':`, ${prettyTarget(routine)}`}. 탭하여 ${isText?'내용 보기':'기록 보기'}, 길게 눌러 순서 이동`);
     card.innerHTML=`<div class="routine-card-top"><h2>${escaped(routine.name)}</h2>${isText?'<span class="text-type-pill">텍스트</span>':`<div class="target-pill"><span>↗</span>${escaped(prettyTarget(routine))}</div>`}</div><p class="routine-note ${routine.note?'':'empty-note'}">${escaped(routine.note)}</p>`;
     card.addEventListener('pointerdown', event=>beginReorder(event,card));
-    card.addEventListener('pointerup', event=>{if(event.pointerType==='touch')return;if(reorderGesture?.pointerId===event.pointerId&&(reorderGesture.moved||reorderGesture.active))return;if(registerTap(card)){if(isText)openTextDetail(routine.id);else openCalendar(routine.id);}});
+    card.addEventListener('pointerup', event=>{if(event.pointerType==='touch')return;if(reorderGesture?.pointerId===event.pointerId&&(reorderGesture.moved||reorderGesture.active))return;if(isText)openTextDetail(routine.id);else openCalendar(routine.id);});
     card.addEventListener('touchstart',event=>beginTouchReorder(event,card),{passive:true});
     card.addEventListener('touchmove',moveTouchReorder,{passive:false});
     card.addEventListener('touchend',event=>finishTouchReorder(event,card,routine.id));
@@ -58,36 +58,41 @@ function renderList() {
 }
 function beginReorder(event,card) {
   if(event.pointerType==='touch'||event.button!==0||reorderGesture)return;
-  const gesture={pointerId:event.pointerId,card,startX:event.clientX,startY:event.clientY,active:false,moved:false,timer:null};
+  const rect=card.getBoundingClientRect();
+  const gesture={pointerId:event.pointerId,card,startX:event.clientX,startY:event.clientY,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,active:false,moved:false,timer:null};
   reorderGesture=gesture;
-  gesture.timer=setTimeout(()=>{
-    if(reorderGesture!==gesture)return;
-    gesture.active=true;
-    card.classList.add('dragging');
-    document.body.classList.add('reordering');
-    navigator.vibrate?.(18);
-  },520);
+  gesture.timer=setTimeout(()=>activateReorder(gesture),520);
 }
 function beginTouchReorder(event,card){
   if(event.touches.length!==1||reorderGesture)return;
   const touch=event.changedTouches[0];
-  const gesture={pointerId:null,touchId:touch.identifier,card,startX:touch.clientX,startY:touch.clientY,active:false,moved:false,timer:null};
+  const rect=card.getBoundingClientRect();
+  const gesture={pointerId:null,touchId:touch.identifier,card,startX:touch.clientX,startY:touch.clientY,offsetX:touch.clientX-rect.left,offsetY:touch.clientY-rect.top,active:false,moved:false,timer:null};
   reorderGesture=gesture;
-  gesture.timer=setTimeout(()=>{
-    if(reorderGesture!==gesture)return;
-    gesture.active=true;
-    card.classList.add('dragging');
-    document.body.classList.add('reordering');
-    navigator.vibrate?.(18);
-  },520);
+  gesture.timer=setTimeout(()=>activateReorder(gesture),520);
 }
+function activateReorder(gesture){
+  if(reorderGesture!==gesture)return;
+  gesture.active=true;
+  const rect=gesture.card.getBoundingClientRect();
+  const preview=gesture.card.cloneNode(true);
+  preview.removeAttribute('id');preview.classList.add('drag-preview');preview.style.width=`${rect.width}px`;preview.style.left=`${rect.left}px`;preview.style.top=`${rect.top}px`;
+  document.body.append(preview);gesture.preview=preview;
+  gesture.card.classList.add('drag-placeholder');
+  document.body.classList.add('reordering');
+  moveDragPreview(gesture,gesture.startX,gesture.startY);
+  navigator.vibrate?.(18);
+}
+function moveDragPreview(gesture,x,y){if(!gesture.preview)return;gesture.preview.style.left=`${x-gesture.offsetX}px`;gesture.preview.style.top=`${y-gesture.offsetY}px`;}
 function reorderAtPoint(card,x,y){
   document.querySelectorAll('.routine-card.drop-target').forEach(item=>item.classList.remove('drop-target'));
   const target=document.elementFromPoint(x,y)?.closest('.routine-card');
   if(!target||target===card)return;
   target.classList.add('drop-target');
   const rect=target.getBoundingClientRect();
+  const before=Array.from(routineList.querySelectorAll('.routine-card')).filter(item=>item!==card).map(item=>[item,item.getBoundingClientRect().top]);
   routineList.insertBefore(card,y>rect.top+rect.height/2?target.nextElementSibling:target);
+  for(const [item,oldTop] of before){const delta=oldTop-item.getBoundingClientRect().top;if(!delta)continue;item.style.transition='none';item.style.transform=`translateY(${delta}px)`;void item.offsetHeight;item.style.transition='transform 180ms cubic-bezier(.2,.75,.25,1)';item.style.transform='';setTimeout(()=>{item.style.transition='';},200);}
 }
 function persistReorderedRoutines(){
   const reordered=Array.from(routineList.querySelectorAll('.routine-card')).map(card=>state.routines.find(item=>item.id===card.dataset.routineId)).filter(Boolean);
@@ -98,7 +103,7 @@ function persistReorderedRoutines(){
 }
 function clearReorderGesture(gesture){
   clearTimeout(gesture.timer);
-  gesture.card.classList.remove('dragging');
+  gesture.card.classList.remove('dragging','drag-placeholder');
   delete gesture.card.dataset.reordering;
   document.querySelectorAll('.routine-card.drop-target').forEach(item=>item.classList.remove('drop-target'));
   document.body.classList.remove('reordering');
@@ -111,20 +116,22 @@ function moveTouchReorder(event){
   if(!touch)return;
   if(Math.hypot(touch.clientX-gesture.startX,touch.clientY-gesture.startY)>9)gesture.moved=true;
   if(!gesture.active&&gesture.moved)clearTimeout(gesture.timer);
-  if(gesture.active){event.preventDefault();reorderAtPoint(gesture.card,touch.clientX,touch.clientY);}
+  if(gesture.active){event.preventDefault();moveDragPreview(gesture,touch.clientX,touch.clientY);reorderAtPoint(gesture.card,touch.clientX,touch.clientY);}
 }
 function finishTouchReorder(event,card,routineId){
   const gesture=reorderGesture;
   const touch=Array.from(event.changedTouches).find(item=>item.identifier===gesture?.touchId);
   if(!gesture||gesture.pointerId!==null||!touch)return;
   if(gesture.active)persistReorderedRoutines();
-    else if(!gesture.moved&&registerTap(card)){const item=state.routines.find(value=>value.id===routineId);if(item?.type==='text')openTextDetail(routineId);else openCalendar(routineId);}
+  else if(!gesture.moved){const item=state.routines.find(value=>value.id===routineId);if(item?.type==='text')openTextDetail(routineId);else openCalendar(routineId);}
+  settleDragPreview(gesture);
   clearReorderGesture(gesture);
 }
 function cancelTouchReorder(event){
   const gesture=reorderGesture;
   if(!gesture||gesture.pointerId!==null||!Array.from(event.changedTouches).some(item=>item.identifier===gesture.touchId))return;
   if(gesture.active)persistReorderedRoutines();
+  settleDragPreview(gesture);
   clearReorderGesture(gesture);
 }
 function moveReorder(event) {
@@ -135,6 +142,7 @@ function moveReorder(event) {
     if(!gesture.active&&gesture.moved)clearTimeout(gesture.timer);
     if(gesture.active){
       event.preventDefault();
+      moveDragPreview(gesture,event.clientX,event.clientY);
       reorderAtPoint(gesture.card,event.clientX,event.clientY);
     }
   }
@@ -147,9 +155,11 @@ function finishReorder(event,cancelled=false) {
   const gesture=reorderGesture;
   if(!gesture||event&&event.pointerId!==gesture.pointerId)return;
   clearTimeout(gesture.timer);
-  if(gesture.active&&!cancelled)persistReorderedRoutines();
+  if(gesture.active)persistReorderedRoutines();
+  settleDragPreview(gesture);
   clearReorderGesture(gesture);
 }
+function settleDragPreview(gesture){const preview=gesture.preview;if(!preview)return;const rect=gesture.card.getBoundingClientRect();preview.style.transition='left 160ms cubic-bezier(.2,.75,.25,1),top 160ms cubic-bezier(.2,.75,.25,1),opacity 160ms ease';preview.style.left=`${rect.left}px`;preview.style.top=`${rect.top}px`;preview.style.opacity='0';setTimeout(()=>preview.remove(),180);gesture.preview=null;}
 function registerTap(element) { const now=Date.now(),last=lastTaps.get(element)||0; if(now-last<420){lastTaps.set(element,0);element.classList.add('double-tap');setTimeout(()=>element.classList.remove('double-tap'),220);return true;}lastTaps.set(element,now);return false; }
 function openForm(id=null) {
   currentId=id; form.reset(); $('#routine-target').value='1';
