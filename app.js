@@ -45,7 +45,7 @@ function renderList() {
   for (const routine of state.routines) {
     const isText=routine.type==='text';
     const card=document.createElement('article'); card.className=`routine-card ${isText?'text-card':''}`; card.dataset.routineId=routine.id; card.tabIndex=0; card.setAttribute('role','button'); card.setAttribute('aria-label',`${routine.name}${isText?', 텍스트 항목':`, ${prettyTarget(routine)}`}. 탭하여 ${isText?'내용 보기':'기록 보기'}, 길게 눌러 순서 이동`);
-    card.innerHTML=`<div class="routine-card-top"><h2>${escaped(routine.name)}</h2>${isText?'<span class="text-type-pill">텍스트</span>':`<div class="target-pill"><span>↗</span>${escaped(prettyTarget(routine))}</div>`}</div><p class="routine-note ${routine.note?'':'empty-note'}">${escaped(routine.note)}</p>`;
+    card.innerHTML=`<div class="routine-card-top"><h2>${escaped(routine.name)}</h2>${isText?'<span class="text-type-pill">텍스트</span>':`<div class="target-pill"><span class="target-icon">↗</span><span class="target-text">${escaped(prettyTarget(routine))}</span></div>`}</div><p class="routine-note ${routine.note?'':'empty-note'}">${escaped(routine.note)}</p>`;
     card.addEventListener('pointerdown', event=>beginReorder(event,card));
     card.addEventListener('pointerup', event=>{if(event.pointerType==='touch')return;if(reorderGesture?.pointerId===event.pointerId&&(reorderGesture.moved||reorderGesture.active))return;if(isText)openTextDetail(routine.id);else openCalendar(routine.id);});
     card.addEventListener('touchstart',event=>beginTouchReorder(event,card),{passive:true});
