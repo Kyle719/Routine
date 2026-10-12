@@ -56,3 +56,10 @@ html,body{overflow-x:visible}
 .edit-calendar{background:transparent;border:0;font-size:21px;transform:scaleX(-1)}
 .edit-calendar:hover,.delete-current:hover{background:transparent}
 @media(prefers-color-scheme:dark){.edit-calendar:hover,.delete-current:hover{background:transparent}}
+#list-view,#routine-list,.routine-card,.routine-card-top{box-sizing:border-box;width:100%;max-width:100%}
+.routine-card-top>*{min-width:0;max-width:100%}
+.target-pill{max-width:48%;white-space:normal;overflow-wrap:anywhere}
+.calendar-actions{gap:0}
+.calendar-actions .icon-button{width:40px}
+@media(max-width:520px){.app-shell{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}}
+@media(max-width:350px){.routine-card-top{flex-wrap:wrap}.routine-card-top h2{flex-basis:100%}.target-pill{max-width:100%}}
