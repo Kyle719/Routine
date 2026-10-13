@@ -26,13 +26,14 @@
       </section>
 
       <section id="calendar-view" class="view" hidden aria-labelledby="calendar-heading">
-        <div class="calendar-title"><div><p class="eyebrow">MY ROUTINE</p><h1 id="calendar-heading"></h1><p class="subheading" id="calendar-description"></p></div><div class="calendar-actions"><button class="icon-button edit-calendar" id="edit-current" aria-label="루틴 편집">✎</button><button class="icon-button delete-current" id="delete-current" aria-label="루틴 삭제" title="루틴 삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
+        <div class="calendar-title"><div><p class="eyebrow">MY ROUTINE</p><h1 id="calendar-heading"></h1></div><div class="calendar-actions"><button class="icon-button edit-calendar" id="edit-current" aria-label="루틴 편집">✎</button><button class="icon-button delete-current" id="delete-current" aria-label="루틴 삭제" title="루틴 삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
         <div class="calendar-card">
           <div class="month-nav"><button class="month-arrow" id="previous-month" aria-label="이전 달">‹</button><button class="month-label" id="month-label" type="button" aria-label="연월 직접 이동"></button><button class="month-arrow" id="next-month" aria-label="다음 달">›</button></div>
           <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
           <div id="calendar-grid" class="calendar-grid"></div>
           <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-bar"></span>주간 목표 달성</div>
         </div>
+        <p class="subheading routine-description" id="calendar-description"></p>
         <div class="history-summary" id="history-summary"></div>
       </section>
 

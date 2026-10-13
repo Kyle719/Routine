@@ -70,3 +70,4 @@ html,body{overflow-x:visible}
 .target-pill .target-text{display:inline-block;flex:none;white-space:nowrap;overflow-wrap:normal;font-size:12px}
 .text-content-field[readonly]{cursor:pointer}
 .text-content-field:not([readonly]){cursor:text}
+.routine-description{margin:14px 3px 18px;white-space:pre-wrap;overflow-wrap:anywhere}
