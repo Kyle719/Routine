@@ -233,7 +233,7 @@ function saveTextDetailField(field){const entry=state.routines.find(item=>item.i
 $('#text-detail-title').addEventListener('input',()=>saveTextDetailField('name'));
 $('#text-detail-content').addEventListener('input',()=>saveTextDetailField('note'));
 $('#text-detail-content').addEventListener('click',enterTextEditMode);
-function resizeRoutineNote(){const content=$('#calendar-description');content.style.height='auto';content.style.height=`${Math.max(52,content.scrollHeight)}px`;}
+function resizeRoutineNote(){const content=$('#calendar-description');if(!content)return;content.rows=1;content.style.height='0px';const height=content.scrollHeight;content.style.height=`${Math.max(52,height+2)}px`;}
 $('#calendar-description').addEventListener('input',()=>{const routine=state.routines.find(item=>item.id===currentId&&item.type!=='text');if(!routine)return;routine.note=$('#calendar-description').value;persist();resizeRoutineNote();});
 $('#routine-note-panel').addEventListener('click',enterRoutineEditMode);
 document.addEventListener('pointerdown',event=>{lastPointerDownTarget=event.target;},true);
