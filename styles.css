@@ -68,3 +68,5 @@ html,body{overflow-x:visible}
 .routine-card-top .target-pill{display:inline-flex;flex-wrap:nowrap;width:max-content;min-width:max-content;white-space:nowrap}
 .target-pill .target-icon{flex:none;font-size:11px}
 .target-pill .target-text{display:inline-block;flex:none;white-space:nowrap;overflow-wrap:normal;font-size:12px}
+.text-content-field[readonly]{cursor:pointer}
+.text-content-field:not([readonly]){cursor:text}

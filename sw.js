@@ -1,6 +1,6 @@
-const CACHE='routine-shell-v4';
+const CACHE='routine-shell-v5';
 const BASE_URL=new URL('./',self.registration.scope);
-const ASSETS=['','index.html','styles.css','styles.css?v=target-inline-20261012','app.js','manifest.webmanifest','icons/routine.svg','icons/routine-192.png','icons/routine-512.png'].map(path=>new URL(path,BASE_URL).href);
+const ASSETS=['','index.html','styles.css','styles.css?v=detail-read-mode-20261013','app.js','manifest.webmanifest','icons/routine.svg','icons/routine-192.png','icons/routine-512.png'].map(path=>new URL(path,BASE_URL).href);
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin||!url.href.startsWith(BASE_URL.href))return;event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}return response;}).catch(()=>caches.match(event.request).then(cached=>cached||caches.match(BASE_URL.href))));});

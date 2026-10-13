@@ -10,7 +10,7 @@
     <link rel="icon" href="./icons/routine.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/routine-192.png" />
     <title>Routine</title>
-    <link rel="stylesheet" href="./styles.css?v=target-inline-20261012" />
+    <link rel="stylesheet" href="./styles.css?v=detail-read-mode-20261013" />
     <script>if(location.hostname==='localhost'||location.hostname==='127.0.0.1'){const events=new EventSource('./__live');events.onmessage=event=>{if(event.data==='update')location.reload();};}</script>
   </head>
   <body>
@@ -37,8 +37,8 @@
       </section>
 
       <section id="text-view" class="view text-view" hidden aria-labelledby="text-detail-title">
-        <div class="text-note-heading"><div><p class="eyebrow">TEXT NOTE</p><input id="text-detail-title" class="text-title-field" type="text" maxlength="40" aria-label="제목" placeholder="제목" /></div><button class="icon-button delete-current" id="delete-text-entry" aria-label="텍스트 항목 삭제" title="삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-        <textarea id="text-detail-content" class="text-content-field" aria-label="내용" placeholder="메모 작성"></textarea>
+        <div class="text-note-heading"><div><p class="eyebrow">TEXT NOTE</p><input id="text-detail-title" class="text-title-field" type="text" maxlength="40" aria-label="제목" placeholder="제목" readonly /></div><button class="icon-button delete-current" id="delete-text-entry" aria-label="텍스트 항목 삭제" title="삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        <textarea id="text-detail-content" class="text-content-field" aria-label="내용" placeholder="메모 작성" readonly></textarea>
       </section>
     </main>
 

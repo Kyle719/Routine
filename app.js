@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const listView = $('#list-view');
 const calendarView = $('#calendar-view');
 const textView = $('#text-view');
+const topbar = $('.topbar');
 const routineList = $('#routine-list');
 const emptyState = $('#empty-state');
 const form = $('#routine-form');
@@ -169,7 +170,7 @@ function openForm(id=null) {
   $('#routine-dialog').showModal();setTimeout(()=>$('#routine-name').focus(),60);
 }
 function updateEntryFields(){const isRoutine=$('#entry-type').value==='routine';$('#routine-goal-fields').hidden=!isRoutine;$('#routine-note-optional').hidden=!isRoutine;$('#routine-period').required=isRoutine;$('#routine-target').required=isRoutine;$('#routine-note').placeholder=isRoutine?'무엇을 할지 간단히 적어주세요':'내용을 입력해 주세요';}
-function openTextDetail(id,{pushHistory=true}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();suppressClickUntil=detailOpenedAt+650;$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';if(pushHistory)history.pushState({routineView:'text',routineId:id},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
+function openTextDetail(id,{pushHistory=true,editing=false}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();suppressClickUntil=detailOpenedAt+650;$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';setTextEditMode(editing);topbar.hidden=true;if(pushHistory)history.pushState({routineView:'text',routineId:id,editing:false},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
 function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return false;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return false;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.');return true; }
 function openCalendar(id, { pushHistory = true } = {}) {
   currentId=id;
@@ -178,6 +179,7 @@ function openCalendar(id, { pushHistory = true } = {}) {
   shownMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
   if(pushHistory)history.pushState({routineView:'calendar',routineId:id},'',location.href);
   renderCalendar();
+  topbar.hidden=true;
   transitionView(listView,calendarView,'forward');
   window.scrollTo({top:0,behavior:'instant'});
 }
@@ -204,7 +206,9 @@ function renderCalendar() {
 }
 function toggleDate(id,iso) { const key=completionKey(id),set=new Set(state.completions[key]||[]);if(set.has(iso)){set.delete(iso);showToast('완료 표시를 해제했습니다.');}else{set.add(iso);showToast('완료로 기록했습니다.');}state.completions[key]=[...set].sort();persist();renderCalendar(); }
 function transitionView(from,to,direction){from.hidden=true;to.hidden=false;to.classList.remove('view-enter-forward','view-enter-back');void to.offsetWidth;to.classList.add(direction==='forward'?'view-enter-forward':'view-enter-back');to.addEventListener('animationend',()=>to.classList.remove('view-enter-forward','view-enter-back'),{once:true});}
-function showList(){renderList();const from=!calendarView.hidden?calendarView:!textView.hidden?textView:null;if(from)transitionView(from,listView,'back');else{calendarView.hidden=true;textView.hidden=true;listView.hidden=false;}window.scrollTo({top:0,behavior:'instant'});}
+function showList(){renderList();const from=!calendarView.hidden?calendarView:!textView.hidden?textView:null;topbar.hidden=false;if(from)transitionView(from,listView,'back');else{calendarView.hidden=true;textView.hidden=true;listView.hidden=false;}window.scrollTo({top:0,behavior:'instant'});}
+function setTextEditMode(editing){const title=$('#text-detail-title'),content=$('#text-detail-content');title.readOnly=!editing;content.readOnly=!editing;textView.classList.toggle('editing',editing);}
+function enterTextEditMode(){if(!$('#text-detail-content').readOnly)return;setTextEditMode(true);history.pushState({routineView:'text',routineId:currentId,editing:true},'',location.href);setTimeout(()=>$('#text-detail-content').focus(),0);}
 function changeMonth(amount){shownMonth=new Date(shownMonth.getFullYear(),shownMonth.getMonth()+amount,1);renderCalendar();}
 function finishCalendarSwipe(event,cancelled=false){if(!calendarSwipe||event&&event.pointerId!==calendarSwipe.pointerId)return;const gesture=calendarSwipe;calendarSwipe=null;if(!cancelled&&gesture.swiped&&Math.abs(gesture.startX-gesture.endX)>56)changeMonth(gesture.endX<gesture.startX?1:-1);}
 function showToast(message){const toast=$('#toast');toast.textContent=message;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),1800);}
@@ -222,6 +226,7 @@ $('#delete-text-entry').addEventListener('click',()=>{if(Date.now()-detailOpened
 function saveTextDetailField(field){const entry=state.routines.find(item=>item.id===currentId&&item.type==='text');if(!entry)return;entry[field]=field==='name'?$('#text-detail-title').value:$('#text-detail-content').value;persist();}
 $('#text-detail-title').addEventListener('input',()=>saveTextDetailField('name'));
 $('#text-detail-content').addEventListener('input',()=>saveTextDetailField('note'));
+$('#text-detail-content').addEventListener('click',enterTextEditMode);
 document.addEventListener('click',event=>{if(event.isTrusted&&event.detail>0&&Date.now()<suppressClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
 $('#previous-month').addEventListener('click',()=>changeMonth(-1));$('#next-month').addEventListener('click',()=>changeMonth(1));
 $('#month-label').addEventListener('click',()=>{const input=$('#month-input');input.value=`${shownMonth.getFullYear()}${String(shownMonth.getMonth()+1).padStart(2,'0')}`;$('#month-dialog').showModal();setTimeout(()=>{input.focus();input.select();},50);});
@@ -234,10 +239,10 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();}));
 window.addEventListener('popstate',event=>{
   if(event.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===event.state.routineId))openCalendar(event.state.routineId,{pushHistory:false});
-  else if(event.state?.routineView==='text'&&state.routines.some(routine=>routine.id===event.state.routineId&&routine.type==='text'))openTextDetail(event.state.routineId,{pushHistory:false});
+  else if(event.state?.routineView==='text'&&state.routines.some(routine=>routine.id===event.state.routineId&&routine.type==='text')){if(!textView.hidden&&currentId===event.state.routineId)setTextEditMode(Boolean(event.state.editing));else openTextDetail(event.state.routineId,{pushHistory:false,editing:Boolean(event.state.editing)});}
   else showList();
 });
 renderList();
 if(history.state?.routineView==='calendar'&&state.routines.some(routine=>routine.id===history.state.routineId))openCalendar(history.state.routineId,{pushHistory:false});
-else if(history.state?.routineView==='text'&&state.routines.some(routine=>routine.id===history.state.routineId&&routine.type==='text'))openTextDetail(history.state.routineId,{pushHistory:false});
+else if(history.state?.routineView==='text'&&state.routines.some(routine=>routine.id===history.state.routineId&&routine.type==='text'))openTextDetail(history.state.routineId,{pushHistory:false,editing:Boolean(history.state.editing)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration failed',error)));
