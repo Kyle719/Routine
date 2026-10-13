@@ -183,6 +183,7 @@ function openCalendar(id, { pushHistory = true, editing = false } = {}) {
   setRoutineEditMode(editing);
   topbar.hidden=true;
   transitionView(listView,calendarView,'forward');
+  requestAnimationFrame(resizeRoutineNote);
   window.scrollTo({top:0,behavior:'instant'});
 }
 function renderCalendar() {
