@@ -10,7 +10,7 @@
     <link rel="icon" href="./icons/routine.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/routine-192.png" />
     <title>Routine</title>
-    <link rel="stylesheet" href="./styles.css?v=detail-read-mode-20261013" />
+    <link rel="stylesheet" href="./styles.css?v=routine-note-edit-20261013" />
     <script>if(location.hostname==='localhost'||location.hostname==='127.0.0.1'){const events=new EventSource('./__live');events.onmessage=event=>{if(event.data==='update')location.reload();};}</script>
   </head>
   <body>
@@ -33,7 +33,7 @@
           <div id="calendar-grid" class="calendar-grid"></div>
           <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-bar"></span>주간 목표 달성</div>
         </div>
-        <p class="subheading routine-description" id="calendar-description"></p>
+        <textarea class="text-content-field routine-description" id="calendar-description" aria-label="루틴 내용" placeholder="내용을 눌러 입력" readonly></textarea>
         <div class="history-summary" id="history-summary"></div>
       </section>
 
