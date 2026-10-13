@@ -16,6 +16,7 @@ let reorderGesture = null;
 let calendarSwipe = null;
 let detailOpenedAt = 0;
 let suppressClickUntil = 0;
+let lastPointerDownTarget = null;
 
 function loadState() {
   try {
@@ -188,9 +189,9 @@ function renderCalendar() {
   const routine=state.routines.find(x=>x.id===currentId);if(!routine){showList();return;}
   $('#calendar-heading').textContent=routine.name;$('#calendar-description').value=routine.note||'';$('#month-label').textContent=formatDate(shownMonth,{year:'numeric',month:'long'});
   const grid=$('#calendar-grid');grid.innerHTML='';
-  const first=new Date(shownMonth.getFullYear(),shownMonth.getMonth(),1);const start=new Date(first);start.setDate(1-first.getDay());
+  const first=new Date(shownMonth.getFullYear(),shownMonth.getMonth(),1);const start=new Date(first);start.setDate(1-first.getDay());const weeksNeeded=Math.ceil((first.getDay()+new Date(shownMonth.getFullYear(),shownMonth.getMonth()+1,0).getDate())/7);
   const today=localISO(new Date());
-  for(let week=0;week<6;week++){
+  for(let week=0;week<weeksNeeded;week++){
     const row=[];let rowDate=new Date(start);rowDate.setDate(start.getDate()+week*7);
     const weeklyDone=routine.period==='week'&&countWeek(routine.id,rowDate)>=routine.target;
     for(let dow=0;dow<7;dow++){
@@ -202,6 +203,7 @@ function renderCalendar() {
     row.forEach(day=>grid.append(day));
   }
   const all=completedDates(routine.id).length;const monthCount=completedDates(routine.id).filter(value=>{const date=fromISO(value);return date.getFullYear()===shownMonth.getFullYear()&&date.getMonth()===shownMonth.getMonth();}).length;
+  resizeRoutineNote();
   $('#history-summary').innerHTML=`이번 달 <strong>${monthCount}회</strong> 완료 · 전체 <strong>${all}회</strong> 기록`;
   $('#previous-month').disabled=false;$('#next-month').disabled=false;
 }
@@ -230,9 +232,11 @@ function saveTextDetailField(field){const entry=state.routines.find(item=>item.i
 $('#text-detail-title').addEventListener('input',()=>saveTextDetailField('name'));
 $('#text-detail-content').addEventListener('input',()=>saveTextDetailField('note'));
 $('#text-detail-content').addEventListener('click',enterTextEditMode);
-$('#calendar-description').addEventListener('input',()=>{const routine=state.routines.find(item=>item.id===currentId&&item.type!=='text');if(!routine)return;routine.note=$('#calendar-description').value;persist();});
-$('#calendar-description').addEventListener('click',enterRoutineEditMode);
-document.addEventListener('click',event=>{if(event.isTrusted&&event.detail>0&&Date.now()<suppressClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
+function resizeRoutineNote(){const content=$('#calendar-description');content.style.height='auto';content.style.height=`${Math.max(52,content.scrollHeight)}px`;}
+$('#calendar-description').addEventListener('input',()=>{const routine=state.routines.find(item=>item.id===currentId&&item.type!=='text');if(!routine)return;routine.note=$('#calendar-description').value;persist();resizeRoutineNote();});
+$('#routine-note-panel').addEventListener('click',enterRoutineEditMode);
+document.addEventListener('pointerdown',event=>{lastPointerDownTarget=event.target;},true);
+document.addEventListener('click',event=>{const fromRoutineCard=lastPointerDownTarget?.closest?.('.routine-card');lastPointerDownTarget=null;if(fromRoutineCard&&event.isTrusted&&event.detail>0&&Date.now()<suppressClickUntil){suppressClickUntil=0;event.preventDefault();event.stopImmediatePropagation();}},true);
 $('#previous-month').addEventListener('click',()=>changeMonth(-1));$('#next-month').addEventListener('click',()=>changeMonth(1));
 $('#month-label').addEventListener('click',()=>{const input=$('#month-input');input.value=`${shownMonth.getFullYear()}${String(shownMonth.getMonth()+1).padStart(2,'0')}`;$('#month-dialog').showModal();setTimeout(()=>{input.focus();input.select();},50);});
 $('#month-form').addEventListener('submit',event=>{event.preventDefault();const value=$('#month-input').value.trim();const year=Number(value.slice(0,4)),month=Number(value.slice(4,6));if(!/^\d{6}$/.test(value)||year<1000||month<1||month>12){showToast('연월을 YYYYMM 형식으로 입력해 주세요.');return;}shownMonth=new Date(year,month-1,1);$('#month-dialog').close();renderCalendar();});
