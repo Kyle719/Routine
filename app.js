@@ -21,8 +21,8 @@ let lastPointerDownTarget = null;
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return saved && Array.isArray(saved.routines) ? saved : { routines: [], completions: {} };
-  } catch { return { routines: [], completions: {} }; }
+    return saved && Array.isArray(saved.routines) ? { ...saved, completions: saved.completions || {}, plans: saved.plans || {} } : { routines: [], completions: {}, plans: {} };
+  } catch { return { routines: [], completions: {}, plans: {} }; }
 }
 function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -31,8 +31,11 @@ function fromISO(value) { const [y,m,d] = value.split('-').map(Number); return n
 function formatDate(date, options) { return new Intl.DateTimeFormat('ko-KR', options).format(date); }
 function escaped(value='') { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function completionKey(id) { return `routine:${id}`; }
+function planKey(id) { return `routine:${id}`; }
 function completedDates(id) { return state.completions[completionKey(id)] || []; }
+function plannedDates(id) { return state.plans[planKey(id)] || []; }
 function isCompleted(id, date) { return completedDates(id).includes(localISO(date)); }
+function isPlanned(id, date) { return plannedDates(id).includes(localISO(date)); }
 function unitText(routine) { return routine.period === 'week' ? '주' : '일'; }
 function prettyTarget(routine) { return `${routine.target}회 이상 / ${routine.period === 'week' ? '주' : '일'}`; }
 function dayWeekStart(date) { const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()); start.setDate(start.getDate()-start.getDay()); return start; }
@@ -172,7 +175,7 @@ function openForm(id=null) {
 }
 function updateEntryFields(){const isRoutine=$('#entry-type').value==='routine';$('#routine-goal-fields').hidden=!isRoutine;$('#routine-note-optional').hidden=!isRoutine;$('#routine-period').required=isRoutine;$('#routine-target').required=isRoutine;$('#routine-note').placeholder=isRoutine?'무엇을 할지 간단히 적어주세요':'내용을 입력해 주세요';}
 function openTextDetail(id,{pushHistory=true,editing=false}={}){const entry=state.routines.find(item=>item.id===id&&item.type==='text');if(!entry)return;currentId=id;detailOpenedAt=Date.now();suppressClickUntil=detailOpenedAt+650;$('#text-detail-title').value=entry.name;$('#text-detail-content').value=entry.note||'';setTextEditMode(editing);topbar.hidden=true;if(pushHistory)history.pushState({routineView:'text',routineId:id,editing:false},'',location.href);const from=!listView.hidden?listView:!calendarView.hidden?calendarView:textView;transitionView(from,textView,'forward');window.scrollTo({top:0,behavior:'instant'});}
-function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return false;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return false;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.');return true; }
+function deleteRoutine(id) { const r=state.routines.find(x=>x.id===id);if(!r)return false;if(!confirm(`“${r.name}” 루틴과 완료 기록을 삭제할까요?`))return false;state.routines=state.routines.filter(x=>x.id!==id);delete state.completions[completionKey(id)];delete state.plans[planKey(id)];persist();renderList();showToast('루틴을 삭제했습니다.');return true; }
 function openCalendar(id, { pushHistory = true, editing = false } = {}) {
   currentId=id;
   detailOpenedAt=Date.now();
@@ -197,9 +200,10 @@ function renderCalendar() {
     const weeklyDone=routine.period==='week'&&countWeek(routine.id,rowDate)>=routine.target;
     for(let dow=0;dow<7;dow++){
       const date=new Date(start);date.setDate(start.getDate()+week*7+dow);const iso=localISO(date);const day=document.createElement('button');
-      day.type='button';day.className='calendar-day';if(date.getMonth()!==shownMonth.getMonth())day.classList.add('outside');if(iso===today)day.classList.add('today');if(isCompleted(routine.id,date))day.classList.add('done');if(dow===0)day.classList.add('week-start','sunday');if(dow===6)day.classList.add('week-end');if(weeklyDone)day.classList.add('week-complete');
-      day.setAttribute('aria-label',`${formatDate(date,{year:'numeric',month:'long',day:'numeric',weekday:'long'})}${isCompleted(routine.id,date)?', 완료':''}${weeklyDone?', 주간 목표 달성':''}. 두 번 탭해서 완료 변경`);day.innerHTML=`<span class="day-number">${date.getDate()}</span>`;
-      day.addEventListener('pointerup',event=>{if(calendarSwipe?.pointerId===event.pointerId&&calendarSwipe.swiped)return;if(registerTap(day))toggleDate(routine.id,iso);});row.push(day);
+      const dateIsFuture=iso>today,dateIsPlanned=isPlanned(routine.id,date),dateIsDone=isCompleted(routine.id,date);
+      day.type='button';day.className='calendar-day';if(date.getMonth()!==shownMonth.getMonth())day.classList.add('outside');if(iso===today)day.classList.add('today');if(dateIsDone)day.classList.add('done');if(dateIsPlanned)day.classList.add('planned');if(dow===0)day.classList.add('week-start','sunday');if(dow===6)day.classList.add('week-end');if(weeklyDone)day.classList.add('week-complete');
+      day.setAttribute('aria-label',`${formatDate(date,{year:'numeric',month:'long',day:'numeric',weekday:'long'})}${dateIsDone?', 완료':''}${dateIsPlanned?', 계획':''}${weeklyDone?', 주간 목표 달성':''}. ${dateIsFuture?'두 번 탭해서 계획 표시 변경':'두 번 탭해서 완료 변경'}`);day.innerHTML=`<span class="day-number">${date.getDate()}</span>`;
+      day.addEventListener('pointerup',event=>{if(calendarSwipe?.pointerId===event.pointerId&&calendarSwipe.swiped)return;if(registerTap(day)){if(dateIsFuture)togglePlan(routine.id,iso);else toggleDate(routine.id,iso);}});row.push(day);
     }
     row.forEach(day=>grid.append(day));
   }
@@ -208,7 +212,8 @@ function renderCalendar() {
   $('#history-summary').innerHTML=`이번 달 <strong>${monthCount}회</strong> 완료 · 전체 <strong>${all}회</strong> 기록`;
   $('#previous-month').disabled=false;$('#next-month').disabled=false;
 }
-function toggleDate(id,iso) { const key=completionKey(id),set=new Set(state.completions[key]||[]);if(set.has(iso)){set.delete(iso);showToast('완료 표시를 해제했습니다.');}else{set.add(iso);showToast('완료로 기록했습니다.');}state.completions[key]=[...set].sort();persist();renderCalendar(); }
+function toggleDate(id,iso) { const planned=new Set(plannedDates(id));if(planned.has(iso)){planned.delete(iso);state.plans[planKey(id)]=[...planned].sort();persist();renderCalendar();showToast('계획을 해제했습니다. 다시 두 번 탭하면 완료로 기록됩니다.');return;}const key=completionKey(id),set=new Set(completedDates(id));if(set.has(iso)){set.delete(iso);showToast('완료 표시를 해제했습니다.');}else{set.add(iso);showToast('완료로 기록했습니다.');}state.completions[key]=[...set].sort();persist();renderCalendar(); }
+function togglePlan(id,iso) { const key=planKey(id),set=new Set(plannedDates(id));if(set.has(iso)){set.delete(iso);showToast('계획을 해제했습니다.');}else{set.add(iso);showToast('할 일을 계획했습니다.');}state.plans[key]=[...set].sort();persist();renderCalendar(); }
 function transitionView(from,to,direction){from.hidden=true;to.hidden=false;to.classList.remove('view-enter-forward','view-enter-back');void to.offsetWidth;to.classList.add(direction==='forward'?'view-enter-forward':'view-enter-back');to.addEventListener('animationend',()=>to.classList.remove('view-enter-forward','view-enter-back'),{once:true});}
 function showList(){renderList();const from=!calendarView.hidden?calendarView:!textView.hidden?textView:null;topbar.hidden=false;if(from)transitionView(from,listView,'back');else{calendarView.hidden=true;textView.hidden=true;listView.hidden=false;}window.scrollTo({top:0,behavior:'instant'});}
 function setTextEditMode(editing){const title=$('#text-detail-title'),content=$('#text-detail-content');title.readOnly=!editing;content.readOnly=!editing;textView.classList.toggle('editing',editing);}
@@ -221,10 +226,10 @@ function showToast(message){const toast=$('#toast');toast.textContent=message;to
 $('#add-button').addEventListener('click',()=>openForm());$('#empty-add').addEventListener('click',()=>openForm());
 form.addEventListener('submit',event=>{event.preventDefault();const data=new FormData(form);const type=String(data.get('type'));const target=Number(data.get('target'));if(type==='routine'&&(!Number.isInteger(target)||target<1||target>30)){$('#routine-target').focus();return;}const value={type,name:String(data.get('name')).trim(),note:String(data.get('note')).trim()};if(type==='routine'){value.period=String(data.get('period'));value.target=target;}if(!value.name)return;
   if(currentId){const old=state.routines.find(x=>x.id===currentId);if(!old)return;const oldType=old.type||'routine';Object.assign(old,value);persist();$('#routine-dialog').close();if(oldType==='text'&&type==='text'){renderList();$('#text-detail-title').value=old.name;$('#text-detail-content').value=old.note||'';showToast('텍스트 항목을 수정했습니다.');}else if(oldType!==type){renderList();history.replaceState(null,'',location.href);showList();showToast(type==='text'?'텍스트 항목으로 변경했습니다.':'루틴으로 변경했습니다.');}else{renderCalendar();setRoutineEditMode(false);if(history.state?.routineView==='calendar')history.replaceState({...history.state,editing:false},'',location.href);showToast('루틴을 수정했습니다.');}}
-  else{const routine={id:uid(),...value};state.routines.push(routine);if(type==='routine')state.completions[completionKey(routine.id)]=[];persist();$('#routine-dialog').close();renderList();showToast(type==='text'?'텍스트 항목을 추가했습니다.':'새 루틴을 추가했습니다.');}
+  else{const routine={id:uid(),...value};state.routines.push(routine);if(type==='routine'){state.completions[completionKey(routine.id)]=[];state.plans[planKey(routine.id)]=[];}persist();$('#routine-dialog').close();renderList();showToast(type==='text'?'텍스트 항목을 추가했습니다.':'새 루틴을 추가했습니다.');}
 });
 $('#entry-type').addEventListener('change',updateEntryFields);
-$('#settings-button').addEventListener('click',()=>$('#settings-dialog').showModal());$('#reset-button').addEventListener('click',()=>{if(!confirm('이 기기에 저장된 모든 루틴과 완료 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.'))return;state={routines:[],completions:{}};persist();$('#settings-dialog').close();showList();showToast('모든 데이터를 삭제했습니다.');});
+$('#settings-button').addEventListener('click',()=>$('#settings-dialog').showModal());$('#reset-button').addEventListener('click',()=>{if(!confirm('이 기기에 저장된 모든 루틴과 완료 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.'))return;state={routines:[],completions:{},plans:{}};persist();$('#settings-dialog').close();showList();showToast('모든 데이터를 삭제했습니다.');});
 $('#home-link').addEventListener('click',event=>{event.preventDefault();history.replaceState(null,'',location.href);showList();});
 $('#edit-current').addEventListener('click',()=>{if(Date.now()-detailOpenedAt>=700)openForm(currentId);});
 $('#delete-current').addEventListener('click',()=>{if(Date.now()-detailOpenedAt<700)return;if(deleteRoutine(currentId)){history.replaceState(null,'',location.href);showList();}});

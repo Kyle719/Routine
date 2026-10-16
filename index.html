@@ -10,7 +10,7 @@
     <link rel="icon" href="./icons/routine.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/routine-192.png" />
     <title>Routine</title>
-    <link rel="stylesheet" href="./styles.css?v=routine-note-autosize-20261013" />
+    <link rel="stylesheet" href="./styles.css?v=planning-days-20261016" />
     <script>if(location.hostname==='localhost'||location.hostname==='127.0.0.1'){const events=new EventSource('./__live');events.onmessage=event=>{if(event.data==='update')location.reload();};}</script>
   </head>
   <body>
@@ -31,7 +31,7 @@
           <div class="month-nav"><button class="month-arrow" id="previous-month" aria-label="이전 달">‹</button><button class="month-label" id="month-label" type="button" aria-label="연월 직접 이동"></button><button class="month-arrow" id="next-month" aria-label="다음 달">›</button></div>
           <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
           <div id="calendar-grid" class="calendar-grid"></div>
-          <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-bar"></span>주간 목표 달성</div>
+          <div class="calendar-legend"><span class="legend-dot today-dot"></span>오늘 <span class="legend-dot done-dot"></span>완료 <span class="legend-dot planned-dot"></span>계획 <span class="legend-bar"></span>주간 목표 달성</div>
         </div>
         <div class="routine-note-panel" id="routine-note-panel"><textarea class="routine-description" id="calendar-description" aria-label="루틴 내용 (탭하여 편집)" placeholder="내용을 탭하여 입력" readonly></textarea></div>
         <div class="history-summary" id="history-summary"></div>
@@ -71,6 +71,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=routine-note-autosize-20261013"></script>
+    <script src="./app.js?v=planning-days-double-tap-20261016"></script>
   </body>
 </html>
